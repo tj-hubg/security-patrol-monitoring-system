@@ -426,6 +426,47 @@ function getCurrentPosition() {
   });
 }
 
+async function getBestPosition(options = {}) {
+  const targetAccuracy = options.targetAccuracy ?? APP_CONFIG.accuracyLimitMeter;
+  const timeoutMs = options.timeoutMs ?? 30000;
+  const minReadings = options.minReadings ?? 3;
+  const onUpdate = options.onUpdate || (() => {});
+  const started = Date.now();
+  let best = null;
+  let readings = 0;
+  let lastError = null;
+
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const position = await getCurrentPosition();
+      readings += 1;
+      const accuracy = Number(position.coords.accuracy);
+      if (!best || accuracy < Number(best.coords.accuracy)) {
+        best = position;
+      }
+
+      const remaining = Math.max(0, Math.ceil((timeoutMs - (Date.now() - started)) / 1000));
+      onUpdate({
+        accuracy: Math.round(accuracy),
+        bestAccuracy: Math.round(Number(best.coords.accuracy)),
+        readings,
+        remaining
+      });
+
+      if (readings >= minReadings && Number(best.coords.accuracy) <= targetAccuracy) {
+        return best;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+  }
+
+  if (best) return best;
+  throw lastError || new Error("GPS gagal dikesan.");
+}
+
 async function handleCheckpointScan(qrValue) {
   const user = store.user();
   const checkpoints = store.get("checkpoints");
@@ -437,11 +478,18 @@ async function handleCheckpointScan(qrValue) {
     return;
   }
 
-  output.innerHTML = `<span class="pill warn">GPS_LOADING</span><p>Sedang ambil coordinate daripada handphone.</p>`;
+  output.innerHTML = `<span class="pill warn">GPS_LOADING</span><p>Sedang stabilkan GPS...</p>`;
 
   let position;
   try {
-    position = await getCurrentPosition();
+    position = await getBestPosition({
+      onUpdate: ({ accuracy, bestAccuracy, readings, remaining }) => {
+        output.innerHTML = `
+          <span class="pill warn">GPS_LOADING</span>
+          <p>Sedang stabilkan GPS...<br>Bacaan: ${readings}<br>Accuracy sekarang: ${accuracy}m<br>Best accuracy: ${bestAccuracy}m<br>Baki: ${remaining}s</p>
+        `;
+      }
+    });
   } catch (error) {
     await saveScanLog(user, checkpoint, null, "GPS_FAILED", "GPS_FAILED");
     output.innerHTML = `<span class="pill bad">GPS_FAILED</span><p>${escapeHtml(error.message || "GPS gagal dikesan.")}</p>`;
@@ -1023,12 +1071,16 @@ function bindView() {
     const status = document.getElementById("registerGpsStatus");
     const latInput = document.getElementById("registerLat");
     const lngInput = document.getElementById("registerLng");
-    status.textContent = "Sedang ambil GPS daripada handphone...";
+    status.textContent = "Sedang stabilkan GPS daripada handphone...";
     try {
-      const position = await getCurrentPosition();
+      const position = await getBestPosition({
+        onUpdate: ({ accuracy, bestAccuracy, readings, remaining }) => {
+          status.textContent = `GPS reading ${readings}. Accuracy sekarang: ${accuracy}m. Best: ${bestAccuracy}m. Baki: ${remaining}s.`;
+        }
+      });
       latInput.value = Number(position.coords.latitude).toFixed(6);
       lngInput.value = Number(position.coords.longitude).toFixed(6);
-      status.textContent = `GPS captured. Accuracy: ${Math.round(position.coords.accuracy)}m.`;
+      status.textContent = `GPS captured. Best accuracy: ${Math.round(position.coords.accuracy)}m.`;
     } catch (error) {
       status.textContent = error.message || "GPS gagal dikesan.";
     }
