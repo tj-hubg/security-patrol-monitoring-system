@@ -452,16 +452,169 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
+  .page {
+    width: 100%;
+    padding: 10px 10px 28px;
+  }
+
   .topbar {
-    padding: 10px 12px;
+    align-items: center;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 7px;
+  }
+
+  .brand img {
+    width: 42px;
+    height: 34px;
   }
 
   .brand-title strong {
+    max-width: 230px;
     font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .brand-title span {
+    max-width: 230px;
+    font-size: 11px;
   }
 
   .clock {
-    font-size: 25px;
-    min-width: 88px;
+    font-size: 23px;
+    min-width: 76px;
+  }
+
+  .toolbar {
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: stretch;
+  }
+
+  .tabs {
+    gap: 6px;
+    flex: 1 1 auto;
+  }
+
+  .tab,
+  .btn {
+    min-height: 46px;
+    padding: 11px 13px;
+    border-radius: 7px;
+    font-size: 15px;
+  }
+
+  .panel,
+  .metric {
+    padding: 14px;
+    box-shadow: 0 8px 18px rgba(23, 32, 51, 0.06);
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  h3 {
+    font-size: 18px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+    padding: 10px 11px;
+    font-size: 16px;
+  }
+
+  .scanner-box {
+    min-height: 240px;
+    border-radius: 7px;
+  }
+
+  .status-line {
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  table {
+    min-width: 0;
+  }
+
+  th,
+  td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  th {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    min-width: 0;
+  }
+
+  .topbar {
+    position: static;
+  }
+
+  .brand-title strong {
+    max-width: 210px;
+  }
+
+  .brand-title span {
+    max-width: 210px;
+  }
+
+  .clock {
+    font-size: 22px;
+    min-width: 74px;
+  }
+
+  .scanner-box {
+    min-height: 230px;
+  }
+
+  .form-grid {
+    gap: 10px;
+  }
+
+  .table-wrap {
+    border-radius: 7px;
+  }
+
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .tabs {
+    min-width: 0;
+  }
+
+  .tab {
+    width: auto;
+  }
+
+  .panel {
+    border-radius: 7px;
+  }
+
+  .notice {
+    font-size: 13px;
   }
 }
