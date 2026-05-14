@@ -520,7 +520,14 @@ async function handleCheckpointScan(qrValue) {
   output.innerHTML = `
     <div class="status-line">${statusPill(scanStatus)} ${statusPill(accuracyStatus)}</div>
     <p><strong>${escapeHtml(checkpoint.checkpoint_id)} - ${escapeHtml(checkpoint.name)}</strong></p>
-    <p>Lat/Lng: ${lat.toFixed(6)}, ${lng.toFixed(6)}<br>Accuracy: ${accuracy}m<br>Distance: ${distance === "" ? "CP coordinate belum set" : `${distance}m`}<br>Shift: ${escapeHtml(shiftStatus.shift_name || "-")} (${escapeHtml(shiftStatus.patrol_status)})</p>
+    <p>
+      Scan GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}<br>
+      CP GPS: ${hasCpCoord ? `${escapeHtml(checkpoint.lat)}, ${escapeHtml(checkpoint.lng)}` : "Belum set"}<br>
+      Accuracy: ${accuracy}m<br>
+      Distance: ${distance === "" ? "CP coordinate belum set" : `${distance}m`}<br>
+      Shift: ${escapeHtml(shiftStatus.shift_name || "-")} (${escapeHtml(shiftStatus.patrol_status)})
+    </p>
+    ${distance !== "" && distance > Number(checkpoint.radius_meter) ? `<p class="notice">Distance jauh daripada radius CP. Login Admin > Checkpoint > tekan Set GPS pada CP ini semasa berada di lokasi sebenar, kemudian Simpan.</p>` : ""}
   `;
 }
 
@@ -1097,7 +1104,17 @@ function bindView() {
         cp.lat = Number(position.coords.latitude).toFixed(6);
         cp.lng = Number(position.coords.longitude).toFixed(6);
         store.set("checkpoints", checkpoints);
-        await apiPost("saveCheckpoint", cp);
+        const apiResult = await apiPost("saveCheckpoint", cp);
+        if (apiResult?.ok === false) {
+          alert(`Google Sheet save failed: ${apiResult.error || "Unknown error"}`);
+          button.textContent = "Set GPS";
+          return;
+        }
+        try {
+          await syncFromApi();
+        } catch (error) {
+          console.warn("Google Sheet sync failed", error);
+        }
         renderApp();
       } catch (error) {
         alert(error.message || error);
